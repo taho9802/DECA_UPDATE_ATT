@@ -36,7 +36,7 @@ def main(argv):
     checkpoint_callback = ModelCheckpoint(
         monitor='Training/loss',
         dirpath=FLAGS.checkpoint_dir,
-        filename='DECA-{epoch:02d}-{train_loss:.2f}',
+        filename='DECA_2.3.3_TEST-{epoch:02d}-{train_loss:.2f}',
         save_top_k=5,
         save_last=True,
         mode='min'
@@ -73,20 +73,25 @@ def main(argv):
         # Create modules
         dm = CapsulePoseDataModule(FLAGS)
         model = CapsulePose(FLAGS)
-        model = model.load_from_checkpoint(os.path.join(
+        model = CapsulePose.load_from_checkpoint(os.path.join(
                 os.getcwd(), FLAGS.load_checkpoint_dir), FLAGS=FLAGS)
         model.configure_optimizers()
 
         # Manually run prep methods on DataModule
         dm.prepare_data()
-        dm.setup()
+        dm.setup('test')
 
         # Run test on validation dataset
-        trainer = pl.Trainer(gpus=1, distributed_backend=None, resume_from_checkpoint=os.path.join(
-                os.getcwd(), FLAGS.load_checkpoint_dir), max_epochs=10000)
-        trainer.test(model, test_dataloaders=dm.val_dataloader())
+        trainer = pl.Trainer(
+            accelerator='gpu',
+            devices=1,
+            max_epochs=10000,
+        )
+
+        trainer.test(model, ckpt_path=FLAGS.load_checkpoint_dir, dataloaders=dm.val_dataloader())
         print(np.array(model.features).shape)
-        np.save('output/features', np.array(model.features))
+        #make sure path exists
+        np.save(os.path.join('../output', 'features'), np.array(model.features))
         
     elif FLAGS.mode == "demo":
         model = CapsulePose(FLAGS)
