@@ -95,12 +95,12 @@ def main(argv):
         
     elif FLAGS.mode == "demo":
         model = CapsulePose(FLAGS)
-        model = model.load_from_checkpoint(os.path.join(
+        model = CapsulePose.load_from_checkpoint(os.path.join(
                 os.getcwd(), FLAGS.load_checkpoint_dir), FLAGS=FLAGS)
         model.configure_optimizers()
         model = model.cuda()
 
-        eval_image(model)
+        eval_image(model, FLAG=FLAGS)
 
 
 if __name__ == '__main__':
